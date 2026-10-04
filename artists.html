@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Artist Gallery</title>
+    </head>
+    <body>
+        <h1>Artists</h1>
+        <h2><a href="/">Home</a></h2>
+        {% for artist in artists_name %}
+        <p>
+            {{ artist["name"]}}
+        </p>
+        {% endfor %}
+    </body>
+</html>

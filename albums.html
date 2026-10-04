@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Album Gallery</title>
+    </head>
+    <body>
+        <h1>Albums</h1>
+        <h2><a href="/">Home</a></h2>
+        <form>
+            <input type="search" id="search" name="search">
+            <input type="submit" id="submit" name="submit">
+        </form>
+        <ul>
+            {% for album in album_list %}
+        
+                <li><a href="/album/{{ album['id'] }}">{{ album["title"] }} - {{ album["artist"] }}
+                </a></li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
