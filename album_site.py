@@ -1,14 +1,31 @@
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 import sqlite3
 import random
 import os
 
 app = Flask(__name__)
+app.secret_key = "secret_three_thirtyone_fifty"
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    error = None
+    connection = sqlite3.connect("album_review.db")
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+    if request.method == "POST":
+        password = request.form["password"]
+        email = request.form["email"]
+        cursor.execute("SELECT * FROM users WHERE email =?", (email,))
+        email_true = cursor.fetchone()
+        if email_true is None:
+            error = "Invalid Credentials."
+        else:
+            if password == email_true["password"]:
+                session["user_id"] = email_true["id"]
+                return redirect(url_for("albums"))
+
+    return render_template("index.html", error_message=error)
 
 
 @app.route("/artists")
@@ -16,7 +33,6 @@ def artists():
     connection = sqlite3.connect("album_review.db")
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    print("DATABASE:", os.path.abspath("album_review.db"))
     cursor.execute("SELECT name FROM artist")
     artist_list = cursor.fetchall()
 
@@ -24,7 +40,7 @@ def artists():
     
     return render_template("artists.html", artists_name=artist_list)
 
-@app.route("/register", methods=["get", "post"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     connection = sqlite3.connect("album_review.db")
     connection.row_factory = sqlite3.Row
@@ -35,13 +51,19 @@ def register():
         email_add = request.form["email"]
         us_id = True
         while us_id:
-            new_id = random.randint(1,100)
+            new_id = random.randint(1,1000)
             cursor.execute("SELECT id FROM users WHERE id =?", (new_id,))
             in_id = cursor.fetchone()
             if in_id is None:        
                 cursor.execute("INSERT or IGNORE into users (id, username, email, password) VALUES (?,?,?,?)",(new_id, username, email_add, pass_word))
                 connection.commit()
+                
                 us_id = False
+        cursor.execute("SELECT * from users WHERE username=?", (username,))
+        user = cursor.fetchone()
+        session["user_id"] = user["id"]
+        return redirect(url_for("index"))
+
     return render_template("register.html")
 
 @app.route("/albums")
@@ -53,14 +75,39 @@ def albums():
     album_list = cursor.fetchall()
     return render_template("albums.html", album_list=album_list)
 
-@app.route("/album/<int:id>")
+@app.route("/album/<int:id>", methods=["GET", "POST"])
 def artist_page(id):
+    error_mess = None
     connection = sqlite3.connect("album_review.db")
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("SELECT * from album WHERE id =?",(id,))
+    cursor.execute("SELECT * FROM album WHERE id =?",(id,))
     album = cursor.fetchone()
-    return render_template("album.html", album_list=album)
+    if album is None:
+        connection.close()
+        return "Album not found", 404
+    cursor.execute("SELECT * FROM reviews WHERE album=?", (album["id"],))
+    var = cursor.fetchall()
+    if request.method == "POST":
+        rating = request.form["rating"]
+        review = request.form["review"]
+        if "user_id" in session:
+            is_not = True
+            while is_not:
+                rev_id = random.randint(1,1000)
+                cursor.execute("SELECT id FROM reviews WHERE id =?", (rev_id,))
+                rev_id2 = cursor.fetchone()
+                if rev_id2 is None:   
+                    cursor.execute("INSERT or IGNORE into reviews (id, user, stars, comment, album) VALUES (?,?,?,?,?)", (rev_id, session["user_id"], rating, review, album["id"]))
+                    connection.commit()
+                    connection.close()
+                    return redirect(url_for('albums'))
+        else:
+            error_mess = "User not logged in. Log in or Register."
+                    
+
+        
+    return render_template("album.html", album_list=album, var=var, error_mess=error_mess)
 
 #@app.route("/artist/<int:artist_id>")
 #def artist_page(artist_id):
@@ -84,7 +131,7 @@ cursor.execute(command_two)
 command_three = """CREATE TABLE IF NOT EXISTS album(id INTEGER PRIMARY KEY, title TEXT, year INTEGER, artist TEXT, FOREIGN KEY(artist) REFERENCES artist(id))"""
 cursor.execute(command_three)
 
-command_four = """CREATE TABLE IF NOT EXISTS reviews(id INTEGER, username TEXT, stars INTEGER, comment TEXT, date TEXT, FOREIGN KEY(username) REFERENCES users(id))"""
+command_four = """CREATE TABLE IF NOT EXISTS reviews(id INTEGER PRIMARY KEY, user TEXT, stars INTEGER, comment TEXT, album INTEGER, FOREIGN KEY(user) REFERENCES users(id), FOREIGN KEY(album) REFERENCES album(id))"""
 cursor.execute(command_four)
 
 #adding to tables

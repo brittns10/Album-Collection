@@ -1,4 +1,4 @@
-{
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -16,7 +16,7 @@
         </ul>
         <br>
         <h3>Sign In</h3>
-        <form action="">
+        <form action="{{url_for('index')}}" method="post">
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
             <br>
@@ -25,6 +25,9 @@
             <br>
             <input type="submit">
         </form>
-        <h4>Don't have an account yet?<a href="/register.html">Sign Up Here!</a></h4>
+        {%if error_message %}
+            <p>{{ error_message }}</p>
+        {% endif %}
+        <h4>Don't have an account yet?<a href="{{ url_for('register')}}">Sign Up Here!</a></h4>
     </body>
 </html>

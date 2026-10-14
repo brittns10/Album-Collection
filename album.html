@@ -4,24 +4,35 @@
 
     </head>
     <body>
+        
         <p><a href="/">Back to home</a></p>
         <ul>
             <li>Title: {{album_list["title"]}}</li>
             <li>Artist: {{album_list["artist"]}}</li>
             <li>Release Year: {{album_list["year"]}}</li>
         </ul>
+        <p>Reviews:</p>
+        {% if var %}
+            {% for va in var %}
+                <p>Rating: {{va["stars"]}}</p>
+                <p>Comment: {{va["comment"]}}</p>
+            {% endfor %}
+        {% endif %}
         <form method="post" action="{{ url_for('artist_page', id=album_list['id']) }}">
             <label for="rating">Rating:</label>
             <select name="rating" id="rating">
-                <option value="one">One Star</option>
-                <option value="two">Two Stars</option>
-                <option value="three">Three Stars</option>
-                <option value="four">Four Stars</option>
-                <option value="five">Five Stars</option>
+                <option value="1">One Star</option>
+                <option value="2">Two Stars</option>
+                <option value="3">Three Stars</option>
+                <option value="4">Four Stars</option>
+                <option value="5">Five Stars</option>
             </select>
             <label for="review">Review:</label>
             <textarea name="review" id="review" rows="3" cols="35"></textarea>
             <button type="submit">Submit</button>
         </form>
+        {% if error_mess %}
+            <p>{{error_mess}}</p>
+        {% endif %}
     </body>
 </html>
